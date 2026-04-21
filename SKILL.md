@@ -1,224 +1,160 @@
 ---
 name: systematic-debugging
-version: 1.0.0
-description: Systematic Debugging - 4-phase root cause process. No guessing, no random fixes. Trace evidence, identify root cause, fix systematically.
+version: 2.0.0
+description: 4-phase root cause debugging. Never guess, find the cause. Based on real production debugging methodology. Trigger on: 'bug', 'error', 'not working', 'broken', 'debug', 'fix this'.
 emoji: 🔍
-tags: [debugging, troubleshooting, root-cause, systematic, ai-agent]
 ---
 
 # Systematic Debugging 🔍
 
-4-phase root cause process. No guessing, no random fixes.
+4 phases. No guessing. Find root cause.
 
-## The Problem
-
-Most AI debugging looks like:
-```
-"Try X"
-"Didn't work"
-"Try Y"
-"Didn't work"
-"Try Z"
-"That broke something else"
-```
-
-This is not debugging. This is guessing.
-
-## The Solution: 4-Phase Process
-
-### Phase 1: Reproduce & Document 🔒
-
-**Goal:** Establish a reliable reproduction
-
-**Steps:**
-1. Get exact error message
-2. Identify exact conditions that trigger it
-3. Create minimal reproduction case
-4. Document what you know
+## The 4 Phases
 
 ```
-Documentation Template:
-
-## Bug Report
-
-**Error Message:**
-[Exact error, full stack trace if available]
-
-**Reproduction Steps:**
-1. [Exact steps to trigger]
-
-**Expected:**
-[What should happen]
-
-**Actual:**
-[What happens instead]
-
-**Environment:**
-- OS: [from uname -a]
-- Version: [from package.json or version command]
-- Last working: [if known]
-- First broken: [if known]
-
-**Minimal Reproduction:**
-[Smallest code that triggers the issue]
+Phase 1: OBSERVE    → What exactly is wrong? (Gather evidence)
+Phase 2: ISOLATE    → Where does it go wrong? (Narrow scope)
+Phase 3: HYPOTHESIZE → Why does it go wrong? (Form theory)
+Phase 4: VERIFY     → Is it actually fixed? (Prove it)
 ```
 
-**Gate:** Can you reproduce it on command? If no, don't proceed.
+## Phase 1: OBSERVE (Don't Skip This)
 
-### Phase 2: Gather Evidence 🔒
-
-**Goal:** Collect data, not theories
-
-**Steps:**
-1. Check logs (application, system, error)
-2. Add logging/debugging if needed
-3. Compare working vs broken cases
-4. Document findings, not conclusions
+**Before touching any code, answer these:**
 
 ```
-Evidence Collection Checklist:
-
-[ ] Application logs checked
-[ ] System logs checked
-[ ] Network requests logged (if applicable)
-[ ] Database queries logged (if applicable)
-[ ] Memory/CPU profile checked (if performance issue)
-[ ] Compared with last known working version
-[ ] Searched for similar issues (GitHub issues, Stack Overflow)
-
-Evidence Table:
-
-| Observation | Data |
-|-------------|------|
-| Error occurs when | [condition] |
-| Error does NOT occur when | [condition] |
-| Related log entries | [entries] |
-| Different in working vs broken | [diffs] |
+□ What is the expected behavior?
+□ What is the actual behavior?
+□ When did it start? (What changed?)
+□ Is it reproducible? (100%? Intermittent?)
+□ What's the exact error message / log output?
+□ What environment? (OS, version, dependencies)
 ```
 
-**Gate:** Do you have concrete evidence, not just theories? If no, gather more.
+**Common mistake:** Jumping to "I think it's because..." without observing first.
 
-### Phase 3: Identify Root Cause 🔒
+**What to do:**
+- Read the actual error (copy-paste, don't paraphrase)
+- Check logs (recent ones first)
+- Reproduce the issue (if possible)
+- Document what you see
 
-**Goal:** Find THE reason, not A reason
+## Phase 2: ISOLATE (Narrow the Scope)
 
-**Steps:**
-1. Form hypothesis based on evidence
-2. Design test to validate hypothesis
-3. Run test
-4. If hypothesis wrong, form new hypothesis (go to step 1)
-5. If right, verify it's THE root cause (not just symptom)
-
-```
-Root Cause Validation:
-
-Hypothesis: [Why you think it happens]
-Test: [How to prove/disprove]
-Expected if hypothesis correct: [What you'll see]
-Actual result: [What you actually saw]
-
-Root Cause vs Symptom Check:
-- Is this the earliest point where things go wrong? → If no, trace back further
-- Would fixing this definitely solve the problem? → If maybe, not root cause yet
-- Can you explain the full chain from this cause to observed error? → If no, gaps exist
-
-Root Cause Found: [Yes/No]
-If Yes: [State the root cause]
-If No: [What else to investigate]
-```
-
-**Gate:** Can you explain the full chain from root cause to observed error? If no, not root cause yet.
-
-### Phase 4: Fix & Verify 🔒
-
-**Goal:** Fix the root cause, verify it works
-
-**Steps:**
-1. Design fix for root cause (not symptom)
-2. Implement fix
-3. Verify original error is gone
-4. Verify fix doesn't break anything else
-5. Add regression test
-6. Document fix
+**Binary search for the bug:**
 
 ```
-Fix Verification Checklist:
+1. Is the problem in my code or external?
+   → Comment out my code. Still broken? External.
 
-[ ] Fix targets root cause, not symptom
-[ ] Original error no longer occurs
-[ ] All existing tests still pass
-[ ] New regression test added
-[ ] Edge cases tested
-[ ] Related functionality verified
-[ ] Fix documented in code comments or docs
+2. Is it in the input, processing, or output?
+   → Print/log at each stage.
 
-Before/After:
+3. Is it in one specific file/function?
+   → Remove files/functions one by one.
+   → Bug disappears? That's where it is.
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Error occurs | Yes | No |
-| Tests passing | X/Y | Y/Y |
-| Side effects | N/A | None detected |
+4. Is it a specific condition?
+   → Test with different inputs.
+   → Pattern emerges? Root cause narrows.
 ```
 
-**Gate:** All checkboxes checked? If no, not done yet.
+**Techniques:**
+- `git bisect` — Find the commit that introduced the bug
+- Print statements at boundaries
+- Comment out code sections
+- Test with minimal reproduction
 
-## Anti-Patterns
+## Phase 3: HYPOTHESIZE (Form a Theory)
 
-| Anti-Pattern | Why It's Bad | Fix |
-|--------------|--------------|-----|
-| "Let me try X" | Random guessing | Reproduce first |
-| "I think it's..." | Theory without evidence | Gather evidence |
-| Fixing symptoms | Problem comes back | Find root cause |
-| "It works now" | Might not be fixed | Verify systematically |
-| No regression test | Bug comes back | Add test |
-
-## Debugging Decision Tree
+**Write your hypothesis BEFORE fixing:**
 
 ```
-Error occurs
-    |
-    v
-Can you reproduce it?
-    |
-    +-- No --> Add logging, try again
-    |
-    +-- Yes --> Document reproduction
-                    |
-                    v
-              Evidence gathered?
-                    |
-                    +-- No --> Check logs, add logging, compare versions
-                    |
-                    +-- Yes --> Hypothesis formed?
-                                    |
-                                    +-- No --> Analyze evidence
-                                    |
-                                    +-- Yes --> Test hypothesis
-                                                    |
-                                                    +-- Wrong --> New hypothesis
-                                                    |
-                                                    +-- Right --> Root cause found?
-                                                                    |
-                                                                    +-- No --> Trace back further
-                                                                    |
-                                                                    +-- Yes --> Fix & verify
+I believe [X] is broken because [Y].
+
+Evidence supporting:
+- [Observation 1]
+- [Observation 2]
+
+Evidence against:
+- [Observation 3]
+
+If I change [Z], the fix should:
+- Make [test case] pass
+- Not break [other thing]
 ```
 
-## Integration with Other Skills
+**Common mistake:** Fixing without understanding. You might "fix" the symptom, not the cause.
 
-- **EVR Framework** — Fix is executed, verified, reported
-- **Workflow Checkpoint** — Track debugging progress
-- **Error Recovery** — Systematic retry after identifying cause
+**Anti-patterns:**
+- ❌ "Let me try changing this..." (random fixing)
+- ❌ "This usually works..." (cargo cult debugging)
+- ❌ "It's probably a race condition" (vague guess)
 
-## Quick Reference
+## Phase 4: VERIFY (Prove It)
+
+**Before claiming "fixed":**
 
 ```
-Phase 1: Reproduce → Document exact error and steps
-Phase 2: Evidence → Logs, comparisons, data (no theories yet)
-Phase 3: Root Cause → Hypothesis → Test → Validate
-Phase 4: Fix → Target root cause → Verify → Regression test
+□ Original test case now passes
+□ Edge cases tested
+□ No new regressions introduced
+□ Error no longer appears in logs
+□ Fix makes sense given the hypothesis
 ```
+
+**Verification checklist:**
+```bash
+# Run the failing test
+npm test -- --grep "failing test"
+# Check logs for errors
+tail -f /var/log/app.log
+# Test edge cases
+[try empty input, huge input, unicode, etc.]
+# Run full test suite
+npm test
+```
+
+## Real Example
+
+**Bug:** "User login sometimes fails"
+
+```
+Phase 1 OBSERVE:
+- Error: "Invalid token" (not "wrong password")
+- Intermittent (10% of logins)
+- Started after deploying auth-service v2.3
+- Only on mobile, not desktop
+
+Phase 2 ISOLATE:
+- Network logs: token arrives intact
+- Auth service: token validation fails intermittently
+- Added logging: token format varies slightly
+
+Phase 3 HYPOTHESIZE:
+- Mobile client generates tokens with different encoding
+- v2.3 tightened token validation
+- Theory: mobile token format doesn't match new validation
+
+Phase 4 VERIFY:
+- Fixed token format in mobile client
+- Tested 100 logins on mobile: 100% success
+- Tested desktop: still works
+- Checked logs: no "Invalid token" errors
+```
+
+## Trigger Phrases
+
+- "bug", "error", "not working"
+- "broken", "debug", "fix this"
+- "doesn't work", "fails", "crash"
+- "调试", "修复", "报错"
+
+## Integration
+
+- **EVR Framework** — Each phase is Execute/Verify
+- **Cognitive Debt Guard** — Document bugs in code review
+- **Error Recovery** — What to do after finding the cause
 
 ## License
 
